@@ -13,6 +13,6 @@ cp -v input_graph.txt input_representation.txt OpenGL/
   LDFLAGS=$(pkg-config --libs glew)
   LDFLAGS="$LDFLAGS -lglut"
 
-  $CC main.cpp "$LDFLAGS" -o main
+  $CC main.cpp -L /usr/lib/x86_64-linux-gnu "$LDFLAGS" -o main
   ./main
 )

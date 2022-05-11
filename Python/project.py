@@ -185,7 +185,7 @@ def main():
     laplacian_matrix = create_laplacian_matrix(main_face)
     # print(laplacian_matrix)
     remaining_representation = compute_remaining_representation(main_face, main_face_representation, laplacian_matrix)
-    #print(remaining_representation)
+    # print(remaining_representation)
     save_representation(main_face, main_face_representation, remaining_representation)
 
 
