@@ -1,5 +1,4 @@
 # BachelorProject
-My implementation of graph visualisation using OpenGL
+My implementation of [Tutte embedding](https://en.wikipedia.org/wiki/Tutte_embedding) using OpenGL and Python
 
-Jiří Povolný
-
+Jiří Povolný <urlikpov@gmail.com>
