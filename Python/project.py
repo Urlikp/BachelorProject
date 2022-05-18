@@ -13,6 +13,8 @@ class Graph:
         self.facesFound: int = 0
         self.Edges: list = []
         self.Neighbours: list = []
+        self.SwappedOrder: list = []
+        self.MainFace: list = []
 
     def main(
             self, main_face: list = None, all_random: bool = False, graph_file: str = "input_graph.txt",
@@ -35,16 +37,17 @@ class Graph:
             faces = self.find_faces()
             main_face = self.find_longest_face(faces)
 
-        main_face_representation = self.compute_face_representation(main_face)
-        laplacian_matrix = self.create_laplacian_matrix(main_face)
+        self.MainFace = main_face
+        main_face_representation = self.compute_face_representation()
+        laplacian_matrix = self.create_laplacian_matrix()
         remaining_representation = self.compute_remaining_representation(
-            main_face, main_face_representation, laplacian_matrix
+            main_face_representation, laplacian_matrix
         )
         random_remaining_representation = self.generate_random_remaining_representation(
-            all_random, main_face, main_face_representation
+            all_random, main_face_representation
         )
         self.save_representation(
-            all_random, representation_file, random_representation_file, main_face, main_face_representation,
+            all_random, representation_file, random_representation_file, main_face_representation,
             remaining_representation, random_remaining_representation
         )
 
@@ -147,12 +150,11 @@ class Graph:
 
         return longest_face
 
-    def compute_face_representation(self, face: list) -> np.ndarray:
+    def compute_face_representation(self) -> np.ndarray:
         """
-        :param face:
         :return:
         """
-        face_angles = len(face)
+        face_angles = len(self.MainFace)
 
         face_coordinates = 0.9 * np.array([
                 np.cos(np.arange(face_angles, dtype=np.float64) * 2 * np.pi / face_angles).round(3),
@@ -161,12 +163,11 @@ class Graph:
 
         return face_coordinates
 
-    def create_laplacian_matrix(self, face: list) -> np.ndarray:
+    def create_laplacian_matrix(self) -> np.ndarray:
         """
-        :param face:
         :return:
         """
-        swapped_neighbours = self.swap_graph(face)
+        swapped_neighbours = self.swap_graph()
 
         neighbour_count = [len(node_neighbours) for node_neighbours in swapped_neighbours]
         degree_matrix = np.eye(self.nodeCount, dtype=np.int64) * np.array(neighbour_count)
@@ -180,21 +181,21 @@ class Graph:
 
         return laplacian_matrix
 
-    def swap_graph(self, face: list) -> list:
+    def swap_graph(self) -> list:
         """
-        :param face:
         :return:
         """
         swapped_edges = deepcopy(self.Edges)
 
-        for node_1, node_2 in enumerate(face):
-            for edge in swapped_edges:
-                if node_1 in edge and node_2 in edge:
-                    continue
-                elif node_1 in edge:
-                    edge[edge.index(node_1)] = node_2
-                elif node_2 in edge:
-                    edge[edge.index(node_2)] = node_1
+        face_set = set(self.MainFace)
+        node_list = range(self.nodeCount)
+        remaining = [x for x in node_list if x not in face_set]
+        self.SwappedOrder = self.MainFace + remaining
+
+        for node_1, node_2 in enumerate(self.SwappedOrder):
+            for swapped_edge, edge in zip(swapped_edges, self.Edges):
+                if node_2 in edge:
+                    swapped_edge[edge.index(node_2)] = node_1
 
         swapped_neighbours = [[] for _ in range(self.nodeCount)]
 
@@ -206,15 +207,14 @@ class Graph:
         return swapped_neighbours
 
     def compute_remaining_representation(
-            self, face: list, face_representation: np.ndarray, laplacian_matrix: np.ndarray
+            self, face_representation: np.ndarray, laplacian_matrix: np.ndarray
     ) -> np.ndarray:
         """
-        :param face:
         :param face_representation:
         :param laplacian_matrix:
         :return:
         """
-        face_length = len(face)
+        face_length = len(self.MainFace)
         matrix_b = laplacian_matrix[:face_length, face_length:]
         remaining_laplacian_matrix = laplacian_matrix[face_length:, face_length:]
         remaining_representation = (
@@ -223,14 +223,13 @@ class Graph:
 
         return remaining_representation
 
-    def generate_random_remaining_representation(self, all_random: bool, face: list, face_representation: np.ndarray) -> np.ndarray:
+    def generate_random_remaining_representation(self, all_random: bool, face_representation: np.ndarray) -> np.ndarray:
         """
         :param all_random:
-        :param face:
         :param face_representation:
         :return:
         """
-        face_length = len(face)
+        face_length = len(self.MainFace)
         if all_random:
             random_coefficients = np.random.rand(face_length, self.nodeCount)
         else:
@@ -241,7 +240,7 @@ class Graph:
         return random_remaining_representation
 
     def save_representation(
-            self, all_random: bool, representation_file: str, random_representation_file: str, face: list,
+            self, all_random: bool, representation_file: str, random_representation_file: str,
             face_representation: np.ndarray, remaining_representation: np.ndarray,
             random_remaining_representation: np.ndarray
     ) -> None:
@@ -249,19 +248,18 @@ class Graph:
         :param all_random:
         :param representation_file:
         :param random_representation_file:
-        :param face:
         :param face_representation:
         :param remaining_representation:
         :param random_remaining_representation:
         :return: None
         """
         swapped_representation = np.append(face_representation, remaining_representation, axis=1)
-        representation = np.transpose(self.swap_representation(face, swapped_representation))
+        representation = np.transpose(self.swap_representation(swapped_representation))
         if all_random:
             random_representation = np.transpose(random_remaining_representation)
         else:
             swapped_random_representation = np.append(face_representation, random_remaining_representation, axis=1)
-            random_representation = np.transpose(self.swap_representation(face, swapped_random_representation))
+            random_representation = np.transpose(self.swap_representation(swapped_random_representation))
 
         print(f"Saving coordinates to file: {representation_file}")
 
@@ -279,16 +277,15 @@ class Graph:
 
         print("Finished saving coordinates!")
 
-    def swap_representation(self, face: list, swapped_representation: np.ndarray) -> np.ndarray:
+    def swap_representation(self, swapped_representation: np.ndarray) -> np.ndarray:
         """
-        :param face:
         :param swapped_representation:
         :return:
         """
         representation: np.ndarray = deepcopy(swapped_representation)
 
-        for node_1, node_2 in zip(reversed(face), reversed(range(len(face)))):
-            representation[:, [node_1, node_2]] = representation[:, [node_2, node_1]]
+        for node_1, node_2 in enumerate(self.SwappedOrder):
+            representation[:, [node_2]] = swapped_representation[:, [node_1]]
 
         return representation
 
