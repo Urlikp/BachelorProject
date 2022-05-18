@@ -11,6 +11,11 @@ $ sudo bash install_requirements_ubuntu.sh
 $ bash build.sh
 ```
 
+## Video
+Click on image to play video:
+
+[![Video](http://img.youtube.com/vi/Bu03aW5Ca5c/0.jpg)](https://youtu.be/Bu03aW5Ca5c)
+
 ## Screenshots:
 
 ![Screenshot_01](https://github.com/Urlikp/BachelorProject/blob/master/Media/graph_1.png)
