@@ -3,7 +3,6 @@
 #include <GL/freeglut.h>
 #include <fstream>
 #include <vector>
-#include <cmath>
 
 #define APP_NAME    "Algebraic Graph Theory"
 
@@ -112,7 +111,6 @@ float LinearInterpolation(int nodeIndex, float timeParameter) {
 
 void TimerCallback(int) {
     AppState.appElapsedTime = 0.0005f * (float)glutGet(GLUT_ELAPSED_TIME);
-    std::cout << "ElapsedTime: " << AppState.appElapsedTime << std::endl;
 
     if (AppState.runAnimation) {
         int nodeIndex;

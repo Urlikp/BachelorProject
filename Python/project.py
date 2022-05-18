@@ -15,14 +15,16 @@ class Graph:
         self.Neighbours: list = []
 
     def main(
-            self, main_face: list = None, graph_file: str = "input_graph.txt",
+            self, main_face: list = None, all_random: bool = False, graph_file: str = "input_graph.txt",
             representation_file: str = "input_representation.txt",
             random_representation_file: str = "input_random_representation.txt"
     ) -> None:
         """
         :param main_face:
+        :param all_random:
         :param graph_file: path to file containing graph (default input_graph.txt)
-        :param representation_file: path to created file containing generated coordinates (default input_representation.txt)
+        :param representation_file: path to created file containing generated coordinates
+        (default input_representation.txt)
         :param random_representation_file:
         :return: None
         """
@@ -39,10 +41,10 @@ class Graph:
             main_face, main_face_representation, laplacian_matrix
         )
         random_remaining_representation = self.generate_random_remaining_representation(
-            main_face, main_face_representation
+            all_random, main_face, main_face_representation
         )
         self.save_representation(
-            representation_file, random_representation_file, main_face, main_face_representation,
+            all_random, representation_file, random_representation_file, main_face, main_face_representation,
             remaining_representation, random_remaining_representation
         )
 
@@ -221,25 +223,30 @@ class Graph:
 
         return remaining_representation
 
-    def generate_random_remaining_representation(self, face: list, face_representation: np.ndarray) -> np.ndarray:
+    def generate_random_remaining_representation(self, all_random: bool, face: list, face_representation: np.ndarray) -> np.ndarray:
         """
+        :param all_random:
         :param face:
         :param face_representation:
         :return:
         """
         face_length = len(face)
-        random_coefficients = np.random.rand(face_length, self.nodeCount - face_length)
+        if all_random:
+            random_coefficients = np.random.rand(face_length, self.nodeCount)
+        else:
+            random_coefficients = np.random.rand(face_length, self.nodeCount - face_length)
         random_coefficients = random_coefficients / np.sum(random_coefficients, axis=0)
         random_remaining_representation = (face_representation @ random_coefficients).round(3)
 
         return random_remaining_representation
 
     def save_representation(
-            self, representation_file: str, random_representation_file: str, face: list,
+            self, all_random: bool, representation_file: str, random_representation_file: str, face: list,
             face_representation: np.ndarray, remaining_representation: np.ndarray,
             random_remaining_representation: np.ndarray
     ) -> None:
         """
+        :param all_random:
         :param representation_file:
         :param random_representation_file:
         :param face:
@@ -249,9 +256,12 @@ class Graph:
         :return: None
         """
         swapped_representation = np.append(face_representation, remaining_representation, axis=1)
-        swapped_random_representation = np.append(face_representation, random_remaining_representation, axis=1)
         representation = np.transpose(self.swap_representation(face, swapped_representation))
-        random_representation = np.transpose(self.swap_representation(face, swapped_random_representation))
+        if all_random:
+            random_representation = np.transpose(random_remaining_representation)
+        else:
+            swapped_random_representation = np.append(face_representation, random_remaining_representation, axis=1)
+            random_representation = np.transpose(self.swap_representation(face, swapped_random_representation))
 
         print(f"Saving coordinates to file: {representation_file}")
 
@@ -285,9 +295,20 @@ class Graph:
 
 if __name__ == "__main__":
     graph: Graph = Graph()
-    if len(argv) == 2:
+    if len(argv) == 3 and argv[1] == "all_random":
         print(f"Accepting arguments: {argv[1:]}")
-        main_face = [int(x) for x in argv[1].split(',')]
-        graph.main(main_face)
+        main_face_parameter = [int(x) for x in argv[2].split(',')]
+        graph.main(main_face=main_face_parameter, all_random=True)
+    elif len(argv) == 3 and argv[2] == "all_random":
+        print(f"Accepting arguments: {argv[1:]}")
+        main_face_parameter = [int(x) for x in argv[1].split(',')]
+        graph.main(main_face=main_face_parameter, all_random=True)
+    elif len(argv) == 2 and argv[1] == "all_random":
+        print(f"Accepting arguments: {argv[1:]}")
+        graph.main(all_random=True)
+    elif len(argv) == 2:
+        print(f"Accepting arguments: {argv[1:]}")
+        main_face_parameter = [int(x) for x in argv[1].split(',')]
+        graph.main(main_face=main_face_parameter)
     else:
         graph.main()
