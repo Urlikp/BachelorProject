@@ -3,6 +3,7 @@
 #include <GL/freeglut.h>
 #include <fstream>
 #include <vector>
+#include <cmath>
 
 #define APP_NAME    "Algebraic Graph Theory"
 
@@ -101,29 +102,33 @@ void KeyboardCallback(unsigned char keyPressed, int mouseX, int mouseY) {
     }
 }
 
-float LinearInterpolation(int nodeIndex, float timeParameter) {
+float LinearInterpolation(int nodeIndex, float speed) {
     float currentCoordinate =
-            (1 - timeParameter) * Graph.NodeRandomCoordinates.at(nodeIndex)
-            + timeParameter * Graph.NodeCorrectCoordinates.at(nodeIndex);
+            (1 - speed) * Graph.NodeRandomCoordinates.at(nodeIndex)
+            + speed * Graph.NodeCorrectCoordinates.at(nodeIndex);
 
     return currentCoordinate;
 }
 
 void TimerCallback(int) {
-    AppState.appElapsedTime = 0.0005f * (float)glutGet(GLUT_ELAPSED_TIME);
+    AppState.appElapsedTime = 0.002f * (float)glutGet(GLUT_ELAPSED_TIME);
 
     if (AppState.runAnimation) {
         int nodeIndex;
         float timeParameter = AppState.appElapsedTime - AppState.animationStartTime;
+        float exponential = exp(timeParameter - 6);
+        float speed = exponential / (exponential + 1);
 
-        if (timeParameter > 1) {
+        std::cout << speed << std::endl;
+
+        if (timeParameter > 12) {
             return;
         }
 
         for (int i = 0; i < Graph.nodeCount; i++) {
             nodeIndex = DIMENSION * i;
-            Graph.NodeCoordinates.at(nodeIndex) = LinearInterpolation(nodeIndex, timeParameter);
-            Graph.NodeCoordinates.at(nodeIndex + 1) = LinearInterpolation(nodeIndex + 1, timeParameter);
+            Graph.NodeCoordinates.at(nodeIndex) = LinearInterpolation(nodeIndex, speed);
+            Graph.NodeCoordinates.at(nodeIndex + 1) = LinearInterpolation(nodeIndex + 1, speed);
         }
     }
 
