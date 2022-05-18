@@ -3,14 +3,16 @@
 #include <GL/freeglut.h>
 #include <fstream>
 #include <vector>
+#include <cmath>
 
 #define APP_NAME    "Algebraic Graph Theory"
 
 #define RETURN_OK       0
 #define RETURN_ERROR    1
 
-#define GRAPH_FILE          "input_graph.txt"
-#define REPRESENTATION_FILE "input_representation.txt"
+#define GRAPH_FILE                  "input_graph.txt"
+#define REPRESENTATION_FILE         "input_representation.txt"
+#define RANDOM_REPRESENTATION_FILE  "input_random_representation.txt"
 
 #define DIMENSION   2
 
@@ -25,9 +27,23 @@
 #define WINDOW_SIZE     1280
 #define WINDOW_POSITION 200
 
-int nodeCount, edgeCount;
-std::vector<int> Edges;
-std::vector<float> NodeCoordinates;
+#define ESCAPE_KEY      27
+#define ANIMATION_KEY   'f'
+
+struct appState {
+    float appElapsedTime = 0.0f;
+    float animationStartTime = 0.0f;
+    bool runAnimation = false;
+} AppState;
+
+struct graph {
+    int nodeCount = 0;
+    int edgeCount = 0;
+    std::vector<int> Edges;
+    std::vector<float> NodeCoordinates;
+    std::vector<float> NodeRandomCoordinates;
+    std::vector<float> NodeCorrectCoordinates;
+} Graph;
 
 void RenderScene() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -37,26 +53,27 @@ void RenderScene() {
     glColor4f(GREEN);
 
     glBegin( GL_POINTS);
-        for (int i = 0; i < nodeCount; i++) {
+        for (int i = 0; i < Graph.nodeCount; i++) {
             nodeIndex = DIMENSION * i;
-            glVertex2f(NodeCoordinates.at(DIMENSION * i), NodeCoordinates.at((DIMENSION * i) + 1));
+            glVertex2f(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
         }
     glEnd();
 
     glBegin( GL_LINES);
-        for (int i = 0; i < edgeCount; i++) {
-            nodeIndex = DIMENSION * Edges.at(DIMENSION * i);
-            glVertex2f(NodeCoordinates.at(nodeIndex), NodeCoordinates.at(nodeIndex + 1));
-            nodeIndex = DIMENSION * Edges.at((DIMENSION * i) + 1);
-            glVertex2f(NodeCoordinates.at(nodeIndex), NodeCoordinates.at(nodeIndex + 1));
+        for (int i = 0; i < Graph.edgeCount; i++) {
+            nodeIndex = DIMENSION * Graph.Edges.at(DIMENSION * i);
+            glVertex2f(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
+            nodeIndex = DIMENSION * Graph.Edges.at((DIMENSION * i) + 1);
+            glVertex2f(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
         }
     glEnd();
 
     glColor4f(RED);
 
-    for (int i = 0; i < nodeCount; i++) {
+    for (int i = 0; i < Graph.nodeCount; i++) {
         nodeIndex = DIMENSION * i;
-        glRasterPos2f(NodeCoordinates.at(DIMENSION * i) + (2 * POINT_SIZE / WINDOW_SIZE), NodeCoordinates.at((DIMENSION * i) + 1) + (2 * POINT_SIZE / WINDOW_SIZE));
+        glRasterPos2f(Graph.NodeCoordinates.at(nodeIndex) + (2 * POINT_SIZE / WINDOW_SIZE),
+                      Graph.NodeCoordinates.at(nodeIndex + 1) + (2 * POINT_SIZE / WINDOW_SIZE));
 
         std::string nodeIndexString = std::to_string(i);
 
@@ -68,15 +85,66 @@ void RenderScene() {
     glutSwapBuffers();
 }
 
+void KeyboardCallback(unsigned char keyPressed, int mouseX, int mouseY) {
+    switch(keyPressed) {
+        case ESCAPE_KEY:
+            glutLeaveMainLoop();
+            break;
+        case ANIMATION_KEY:
+            if (!AppState.runAnimation) {
+                AppState.runAnimation = true;
+                AppState.animationStartTime = AppState.appElapsedTime;
+            }
+
+            break;
+        default:
+            break;
+    }
+}
+
+float LinearInterpolation(int nodeIndex, float timeParameter) {
+    float currentCoordinate =
+            (1 - timeParameter) * Graph.NodeRandomCoordinates.at(nodeIndex)
+            + timeParameter * Graph.NodeCorrectCoordinates.at(nodeIndex);
+
+    return currentCoordinate;
+}
+
+void TimerCallback(int) {
+    AppState.appElapsedTime = 0.0005f * (float)glutGet(GLUT_ELAPSED_TIME);
+    std::cout << "ElapsedTime: " << AppState.appElapsedTime << std::endl;
+
+    if (AppState.runAnimation) {
+        int nodeIndex;
+        float timeParameter = AppState.appElapsedTime - AppState.animationStartTime;
+
+        if (timeParameter > 1) {
+            return;
+        }
+
+        for (int i = 0; i < Graph.nodeCount; i++) {
+            nodeIndex = DIMENSION * i;
+            Graph.NodeCoordinates.at(nodeIndex) = LinearInterpolation(nodeIndex, timeParameter);
+            Graph.NodeCoordinates.at(nodeIndex + 1) = LinearInterpolation(nodeIndex + 1, timeParameter);
+        }
+    }
+
+    glutTimerFunc(33, TimerCallback, 0);
+
+    glutPostRedisplay();
+}
+
 void OpenGLSetup() {
     glClearColor(BACKGROUND);
     glPointSize(POINT_SIZE);
     glLineWidth(LINE_WIDTH);
 
     glutDisplayFunc(RenderScene);
+    glutKeyboardFunc(KeyboardCallback);
+    glutTimerFunc(33, TimerCallback, 0);
 }
 
-int OpenGLInit(int *argc, char** argv) {
+int OpenGLInit(int* argc, char** argv) {
     glutInit(argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 
@@ -98,37 +166,53 @@ int OpenGLInit(int *argc, char** argv) {
 int LoadInput() {
     std::ifstream GraphFile(GRAPH_FILE);
     std::ifstream RepresentationFile(REPRESENTATION_FILE);
+    std::ifstream RandomRepresentationFile(RANDOM_REPRESENTATION_FILE);
 
-    if (!GraphFile.is_open() || !RepresentationFile.is_open()) {
+    if (!GraphFile.is_open() || !RepresentationFile.is_open() || !RandomRepresentationFile.is_open()) {
         std::cerr << "Error: files could not be opened" << std::endl;
         std::cerr << GRAPH_FILE << ": " << GraphFile.is_open() << std::endl;
         std::cerr << REPRESENTATION_FILE << ": " << RepresentationFile.is_open() << std::endl;
+        std::cerr << RANDOM_REPRESENTATION_FILE << ": " << RandomRepresentationFile.is_open() << std::endl;
         return RETURN_ERROR;
     }
 
-    GraphFile >> nodeCount;
-    edgeCount = 0;
-    NodeCoordinates.reserve(DIMENSION * nodeCount);
+    GraphFile >> Graph.nodeCount;
+
+    Graph.NodeCoordinates.reserve(DIMENSION * Graph.nodeCount);
+    Graph.NodeCorrectCoordinates.reserve(DIMENSION * Graph.nodeCount);
+    Graph.NodeRandomCoordinates.reserve(DIMENSION * Graph.nodeCount);
 
     int edgeBegin, edgeEnd;
 
     while (!GraphFile.eof()) {
         GraphFile >> edgeBegin >> edgeEnd;
-        Edges.push_back(edgeBegin);
-        Edges.push_back(edgeEnd);
-        edgeCount++;
+
+        Graph.Edges.push_back(edgeBegin);
+        Graph.Edges.push_back(edgeEnd);
+        Graph.edgeCount++;
     }
 
     float nodeX, nodeY;
 
     while (!RepresentationFile.eof()) {
         RepresentationFile >> nodeX >> nodeY;
-        NodeCoordinates.push_back(nodeX);
-        NodeCoordinates.push_back(nodeY);
+
+        Graph.NodeCorrectCoordinates.push_back(nodeX);
+        Graph.NodeCorrectCoordinates.push_back(nodeY);
+    }
+
+    while (!RandomRepresentationFile.eof()) {
+        RandomRepresentationFile >> nodeX >> nodeY;
+
+        Graph.NodeCoordinates.push_back(nodeX);
+        Graph.NodeRandomCoordinates.push_back(nodeX);
+        Graph.NodeCoordinates.push_back(nodeY);
+        Graph.NodeRandomCoordinates.push_back(nodeY);
     }
 
     GraphFile.close();
     RepresentationFile.close();
+    RandomRepresentationFile.close();
 
     return RETURN_OK;
 }
