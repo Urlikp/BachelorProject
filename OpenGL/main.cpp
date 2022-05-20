@@ -21,8 +21,8 @@
 #define BLUE        0.0f, 0.0f, 1.0f, 1.0f
 #define BACKGROUND  0.0f, 0.0f, 0.0f, 0.0f
 
-#define POINT_SIZE  15.0f
-#define LINE_WIDTH  2.0f
+#define POINT_SIZE  15.0
+#define LINE_WIDTH  2.0
 
 #define WINDOW_SIZE     1280
 #define WINDOW_POSITION 200
@@ -31,8 +31,8 @@
 #define ANIMATION_KEY   'f'
 
 struct appState {
-    float appElapsedTime = 0.0f;
-    float animationStartTime = 0.0f;
+    double appElapsedTime = 0.0;
+    double animationStartTime = 0.0;
     bool runAnimation = false;
 } AppState;
 
@@ -40,9 +40,9 @@ struct graph {
     int nodeCount = 0;
     int edgeCount = 0;
     std::vector<int> Edges;
-    std::vector<float> NodeCoordinates;
-    std::vector<float> NodeRandomCoordinates;
-    std::vector<float> NodeCorrectCoordinates;
+    std::vector<double> NodeCoordinates;
+    std::vector<double> NodeRandomCoordinates;
+    std::vector<double> NodeCorrectCoordinates;
 } Graph;
 
 void RenderScene() {
@@ -55,16 +55,16 @@ void RenderScene() {
     glBegin( GL_POINTS);
         for (int i = 0; i < Graph.nodeCount; i++) {
             nodeIndex = DIMENSION * i;
-            glVertex2f(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
+            glVertex2d(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
         }
     glEnd();
 
     glBegin( GL_LINES);
         for (int i = 0; i < Graph.edgeCount; i++) {
             nodeIndex = DIMENSION * Graph.Edges.at(DIMENSION * i);
-            glVertex2f(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
+            glVertex2d(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
             nodeIndex = DIMENSION * Graph.Edges.at((DIMENSION * i) + 1);
-            glVertex2f(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
+            glVertex2d(Graph.NodeCoordinates.at(nodeIndex), Graph.NodeCoordinates.at(nodeIndex + 1));
         }
     glEnd();
 
@@ -72,7 +72,7 @@ void RenderScene() {
 
     for (int i = 0; i < Graph.nodeCount; i++) {
         nodeIndex = DIMENSION * i;
-        glRasterPos2f(Graph.NodeCoordinates.at(nodeIndex) + (2 * POINT_SIZE / WINDOW_SIZE),
+        glRasterPos2d(Graph.NodeCoordinates.at(nodeIndex) + (2 * POINT_SIZE / WINDOW_SIZE),
                       Graph.NodeCoordinates.at(nodeIndex + 1) + (2 * POINT_SIZE / WINDOW_SIZE));
 
         std::string nodeIndexString = std::to_string(i);
@@ -102,8 +102,8 @@ void KeyboardCallback(unsigned char keyPressed, int mouseX, int mouseY) {
     }
 }
 
-float LinearInterpolation(int nodeIndex, float speed) {
-    float currentCoordinate =
+double LinearInterpolation(int nodeIndex, double speed) {
+    double currentCoordinate =
             (1 - speed) * Graph.NodeRandomCoordinates.at(nodeIndex)
             + speed * Graph.NodeCorrectCoordinates.at(nodeIndex);
 
@@ -111,15 +111,13 @@ float LinearInterpolation(int nodeIndex, float speed) {
 }
 
 void TimerCallback(int) {
-    AppState.appElapsedTime = 0.002f * (float)glutGet(GLUT_ELAPSED_TIME);
+    AppState.appElapsedTime = 0.002f * (double)glutGet(GLUT_ELAPSED_TIME);
 
     if (AppState.runAnimation) {
         int nodeIndex;
-        float timeParameter = AppState.appElapsedTime - AppState.animationStartTime;
-        float exponential = exp(timeParameter - 6);
-        float speed = exponential / (exponential + 1);
-
-        std::cout << speed << std::endl;
+        double timeParameter = AppState.appElapsedTime - AppState.animationStartTime;
+        double exponential = exp(timeParameter - 6);
+        double speed = exponential / (exponential + 1);
 
         if (timeParameter > 12) {
             return;
@@ -195,7 +193,7 @@ int LoadInput() {
         Graph.edgeCount++;
     }
 
-    float nodeX, nodeY;
+    double nodeX, nodeY;
 
     while (!RepresentationFile.eof()) {
         RepresentationFile >> nodeX >> nodeY;
