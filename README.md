@@ -11,10 +11,12 @@ $ sudo bash install_requirements_ubuntu.sh
 $ bash build.sh
 ```
 
-## Video
+## Videos:
+[Playlist](https://www.youtube.com/playlist?list=PLBuG_2a4g9lFZwrufIdn3p1itkugLSZvh)
+
 Click on image to play video:
 
-[![Video](http://img.youtube.com/vi/Bu03aW5Ca5c/0.jpg)](https://youtu.be/Bu03aW5Ca5c)
+[![Video](http://img.youtube.com/vi/SoTiWwz-qig/0.jpg)](https://youtu.be/SoTiWwz-qig)
 
 ## Screenshots:
 
