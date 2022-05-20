@@ -2,10 +2,29 @@
 
 PARAMETER=0
 ALL_RANDOM=0
+HELP="Usage: $0 [OPTIONS]
 
-while getopts ":af:" OPT
+$(basename "$0") is a script that runs my implementation of Tutte embedding using OpenGL and Python. Default
+implementation tries to find any face and designate it as main face, then it generates starting random coordinates for
+all nodes but those, that are part of the main face.
+
+OpenGL application controls:
+    f - start the animation
+    esc - exit the application
+
+Options:
+    -h  Print help and exit script
+    -a  Generate starting random coordinates for all nodes
+    -f <prefix>
+        Choose custom main face, it should be in form: \"node_1,node_2,...,node_n\", for eample: \"0,1,5,4\""
+
+while getopts ":haf:" OPT
 do
   case ${OPT} in
+  h)
+    echo "$HELP"
+    exit 0
+    ;;
   a)
     ALL_RANDOM=1
     ;;
@@ -14,7 +33,8 @@ do
     PARAMETER=1
     ;;
   ?)
-    break
+    echo "$HELP"
+    exit 1
     ;;
   esac
 done
