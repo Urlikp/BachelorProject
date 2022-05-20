@@ -4,12 +4,23 @@ My implementation of [Tutte embedding](https://en.wikipedia.org/wiki/Tutte_embed
 Jiří Povolný <urlikpov@gmail.com>
 
 ## How to use:
-* input abstract graph to [input_graph.txt](https://github.com/Urlikp/BachelorProject/blob/master/input_graph.txt)
-* run in Ubuntu terminal:
+* Input abstract graph to [input_graph.txt](https://github.com/Urlikp/BachelorProject/blob/master/input_graph.txt), the graph should be planar and 3-connected:
+  * Line 1: N (integer, number of nodes)
+  * Line 2: A B (node A is connected with node B, A and B are integers)
+  * ...
+* Run in Ubuntu terminal:
 ```bash
 $ sudo bash install_requirements_ubuntu.sh
 $ bash build.sh
 ```
+* build.sh options:
+```bash
+    -h  Print help and exit script
+    -a  Generate starting random coordinates for all nodes
+    -f <face>
+        Choose custom main face, it should be in form: "node_1,node_2,...,node_n", for eample: "0,1,5,4"
+```
+
 
 ## Videos:
 [Playlist](https://www.youtube.com/playlist?list=PLBuG_2a4g9lFZwrufIdn3p1itkugLSZvh)
