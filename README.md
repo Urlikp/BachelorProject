@@ -15,11 +15,14 @@ $ bash build.sh
 ```
 * build.sh options:
 ```bash
-    -h  Print help and exit script
-    -a  Generate starting random coordinates for all nodes
-    -f <face>
-        Choose custom main face, it should be in form: "node_1,node_2,...,node_n", for eample: "0,1,5,4"
+-h  Print help and exit script
+-a  Generate starting random coordinates for all nodes
+-f <face>
+    Choose custom main face, it should be in form: "node_1,node_2,...,node_n", for eample: "0,1,5,4"
 ```
+* OpenGL application controls:
+  * f - start the animation
+  * esc - exit the application
 
 
 ## Videos:
